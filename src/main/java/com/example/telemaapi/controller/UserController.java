@@ -1,0 +1,8 @@
+package com.example.telemaapi.controller;
+
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class UserController {
+
+}
