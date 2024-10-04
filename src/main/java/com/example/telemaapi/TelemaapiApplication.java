@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 
-@SpringBootApplication
+@SpringBootApplication()
 @OpenAPIDefinition(info = @Info(title = "Telema API", version = "1.0", description = "Telema API for file uploading"))
 public class TelemaapiApplication {
 
