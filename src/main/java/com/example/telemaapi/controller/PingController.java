@@ -5,12 +5,14 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @Tag(name = "PingController", description = "Checking if services are up and running")
+@RequestMapping("/api/public")
 public class PingController {
 
 	@Autowired

@@ -1,6 +1,7 @@
 package com.example.telemaapi.service;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,12 +20,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = userRepository.findByUsername(username);
-		if (user == null) {
+		Optional<User> user = userRepository.findByUsername(username);
+		if (user.isEmpty()) {
 			throw new UsernameNotFoundException(username);
 		}
 		return new org.springframework.security.core.userdetails.User(
-				user.getUsername(), user.getPassword(), new ArrayList<>());
+				user.get().getUsername(), user.get().getPassword(), new ArrayList<>());
 	}
 
 }

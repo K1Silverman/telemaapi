@@ -1,37 +1,31 @@
 package com.example.telemaapi.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.telemaapi.dto.UserDto;
 import com.example.telemaapi.entity.User;
 import com.example.telemaapi.mapper.UserMapper;
 import com.example.telemaapi.repository.UserRepository;
-import com.example.telemaapi.utils.PasswordUtils;
-
-import jakarta.annotation.Resource;
 
 @Service
 public class UserService {
 
-	@Resource
+	@Autowired
 	private UserRepository userRepository;
 
-	@Resource
+	@Autowired
 	private UserMapper userMapper;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	public String registerNewUser(UserDto userDto) {
 		User user = userMapper.toEntity(userDto);
-		String hashedPassword = PasswordUtils.hashPassword(userDto.getPassword());
+		String hashedPassword = passwordEncoder.encode(userDto.getPassword());
 		user.setPassword(hashedPassword);
 		userRepository.save(user);
 		return user.getUsername();
-	}
-
-	public boolean authenticateUser(UserDto userDto) {
-		User user = userRepository.findByUsername(userDto.getUsername());
-		if (user == null) {
-			return false;
-		}
-		return PasswordUtils.checkPassword(userDto.getPassword(), user.getPassword());
 	}
 }
