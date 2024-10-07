@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@Tag(name = "PingController", description = "Checking if services are up and running")
+@Tag(name = "Ping Controller", description = "Checking if services are up and running")
 @RequestMapping("/api/public")
 public class PingController {
 

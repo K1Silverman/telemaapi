@@ -1,5 +1,6 @@
 package com.example.telemaapi;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.example.telemaapi.infrastructure.CustomAuthenticationEntryPoint;
 import com.example.telemaapi.utils.JwtRequestFilter;
 
 @Configuration
@@ -20,11 +22,9 @@ import com.example.telemaapi.utils.JwtRequestFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private final JwtRequestFilter jwtRequestFilter;
-
-	public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
-		this.jwtRequestFilter = jwtRequestFilter;
-	}
+	@Autowired
+	private JwtRequestFilter jwtRequestFilter;
+	private CustomAuthenticationEntryPoint authenticationEntryPoint;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,8 +32,11 @@ public class SecurityConfig {
 		http
 				.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/api/auth/**", "/api/public/**", "/swagger-ui/**", "v3/**").permitAll()
+						.requestMatchers("/api/auth/**", "/api/public/**", "/swagger-ui/**", "v3/api-docs/**", "/swagger-ui.html",
+								"/webjars/**")
+						.permitAll()
 						.anyRequest().authenticated())
+				.exceptionHandling(exc -> exc.authenticationEntryPoint(authenticationEntryPoint))
 				.sessionManagement(session -> session
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
