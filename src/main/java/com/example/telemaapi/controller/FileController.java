@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.telemaapi.dto.UserFilesDto;
+import com.example.telemaapi.infrastructure.validation.DisallowedExtensions;
 import com.example.telemaapi.service.FileService;
 import com.example.telemaapi.utils.JwtUtil;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
 @Tag(name = "Files", description = "Uploading and listing user's files")
@@ -39,17 +41,13 @@ public class FileController {
 
 	@PostMapping(value = "/", consumes = "multipart/form-data")
 	public ResponseEntity<?> uploadFile(
-			@Parameter(description = "File to upload", required = true) @RequestParam("File") MultipartFile file,
+			@Parameter(description = "File to upload", required = true) @RequestParam("File") @Valid @DisallowedExtensions({
+					"image/jpeg", "image/png", "image/gif" }) MultipartFile file,
 			HttpServletRequest request) throws Exception {
 
-		try {
-			String username = getUsernameFromJWT(request);
-			UserFilesDto fileUploadDto = fileService.uploadFile(username, file);
-			return ResponseEntity.ok().body(fileUploadDto);
-		} catch (Exception e) {
-			return ResponseEntity.status(500).body("Error uploading file: " + e);
-		}
-
+		String username = getUsernameFromJWT(request);
+		UserFilesDto fileUploadDto = fileService.uploadFile(username, file);
+		return ResponseEntity.ok().body(fileUploadDto);
 	}
 
 	private String getUsernameFromJWT(HttpServletRequest request) throws Exception {

@@ -1,4 +1,4 @@
-package com.example.telemaapi;
+package com.example.telemaapi.config;
 
 import java.time.Duration;
 

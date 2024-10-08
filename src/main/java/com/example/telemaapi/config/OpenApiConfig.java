@@ -1,4 +1,4 @@
-package com.example.telemaapi;
+package com.example.telemaapi.config;
 
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;

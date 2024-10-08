@@ -2,7 +2,10 @@ package com.example.telemaapi.utils;
 
 import java.io.IOException;
 
+import org.hibernate.mapping.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,8 +14,12 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.example.telemaapi.infrastructure.error.ApiError;
 import com.example.telemaapi.service.CustomUserDetailsService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,39 +34,55 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 	@Autowired
 	private JwtUtil jwtUtil;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws ServletException, IOException {
 
-		final String authorizationHeader = request.getHeader("Authorization");
-		String username = null;
-		String jwt = null;
+		try {
+			final String authorizationHeader = request.getHeader("Authorization");
+			String username = null;
+			String jwt = null;
 
-		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-			jwt = authorizationHeader.substring(7);
-			try {
+			if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+				jwt = authorizationHeader.substring(7);
 				username = jwtUtil.extractUsername(jwt);
-			} catch (Exception e) {
-				throw new ServletException("Invalid JWT token: " + e.getMessage());
-			}
-		}
-		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-			UserDetails userDetails;
-			try {
-				userDetails = userDetailsService.loadUserByUsername(username);
-			} catch (UsernameNotFoundException e) {
-				throw new ServletException("User not found: " + e.getMessage());
 			}
 
-			if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-				UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-						userDetails, null, userDetails.getAuthorities());
-				usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-			} else {
-				throw new ServletException("Invalid JWT token");
+			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+				if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+							userDetails, null, userDetails.getAuthorities());
+					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					SecurityContextHolder.getContext().setAuthentication(authToken);
+				} else {
+					sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
+					return;
+				}
 			}
+
+			chain.doFilter(request, response);
+		} catch (ExpiredJwtException e) {
+			sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token has expired");
+		} catch (JwtException e) {
+			sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token: " + e.getMessage());
+		} catch (UsernameNotFoundException e) {
+			sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "User not found: " + e.getMessage());
+		} catch (Exception e) {
+			sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred processing the JWT");
 		}
-		chain.doFilter(request, response);
+	}
+
+	private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+		response.setStatus(status);
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+		ApiError body = ApiError.builder().error(HttpStatus.valueOf(status).getReasonPhrase()).message(message).build();
+
+		objectMapper.writeValue(response.getOutputStream(), body);
 	}
 }
