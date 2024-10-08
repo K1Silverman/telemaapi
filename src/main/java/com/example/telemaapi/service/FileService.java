@@ -55,52 +55,65 @@ public class FileService {
 
 	@Transactional
 	public UserFilesDto uploadFile(String username, MultipartFile file) throws IOException {
+
 		Optional<User> user = getUser(username);
 		FileUpload fileToUpload = setFileReadyForUpload(file, user.get());
 		FileUpload uploadedFile = fileRepository.save(fileToUpload);
 		FileUploadDto fileUploadDto = fileUploadMapper.toDto(uploadedFile);
+
 		return updateCache(username, fileUploadDto);
 	}
 
 	@Transactional
 	@Cacheable(value = "userFiles", key = "#username")
 	public UserFilesDto getUserFiles(String username) throws IllegalArgumentException {
+
 		Optional<User> user = getUser(username);
 		List<FileUpload> userFiles = fileRepository.findByUploader(user.get());
 		UserFilesDto userFilesDto = userFilesMapper.toDto(user.get());
 		List<FileUploadDto> fileUploadDtos = fileUploadMapper.toDtos(userFiles);
 		userFilesDto.setFiles(fileUploadDtos);
+
 		return userFilesDto;
 	}
 
 	private Optional<User> getUser(String username) {
+
 		Optional<User> user = userRepository.getUserByUsername(username);
+
 		if (user.isEmpty()) {
 			throw new IllegalArgumentException("User not found");
 		}
+
 		return user;
 	}
 
 	private FileUpload setFileReadyForUpload(MultipartFile fileToUpload, User user) throws IOException {
+
 		FileUpload file = new FileUpload();
 		file.setFileName(fileToUpload.getOriginalFilename());
 		file.setFileType(fileToUpload.getContentType());
 		file.setUploader(user);
 		file.setFile(fileToUpload.getBytes());
 		file.setMetadata(getMetadata());
+
 		return file;
 	}
 
 	private Map<String, Object> getMetadata() throws RuntimeException {
+
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<String> objectResponse = restTemplate.getForEntity(metadataUrl, String.class);
+
 		if (objectResponse.getStatusCode().is2xxSuccessful()) {
 			try {
 				Map<String, Object> metadata;
 				metadata = objectMapper.readValue(objectResponse.getBody(),
 						new TypeReference<Map<String, Object>>() {
 						});
+
 				return metadata;
+
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException("Error parsing public API response", e);
 			}
@@ -110,16 +123,20 @@ public class FileService {
 	}
 
 	private UserFilesDto updateCache(String username, FileUploadDto newFile) {
+
 		Cache cache = cacheManager.getCache("userFiles");
 		UserFilesDto cachedUser = cache.get(username, UserFilesDto.class);
+
 		if (cachedUser == null) {
 			User user = userRepository.getUserByUsername(username).get();
 			cachedUser = userFilesMapper.toDto(user);
 		}
+
 		List<FileUploadDto> filesList = cachedUser.getFiles();
 		filesList.add(newFile);
 		cachedUser.setFiles(filesList);
 		cache.put(username, cachedUser);
+
 		return cachedUser;
 	}
 }

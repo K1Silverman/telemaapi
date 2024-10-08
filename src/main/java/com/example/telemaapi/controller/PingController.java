@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -22,11 +23,13 @@ public class PingController {
 	private StringRedisTemplate redisTemplate;
 
 	@GetMapping("/ping")
+	@Operation(summary = "Ping", description = "Just returns Pong.")
 	public String ping() {
 		return "pong";
 	}
 
 	@GetMapping("/test-postgres")
+	@Operation(summary = "Test Postgres", description = "Cheks if application has connection and access to database.")
 	public String testPostgres() {
 		try {
 			String result = jdbcTemplate.queryForObject("SELECT 1", String.class);
@@ -37,6 +40,7 @@ public class PingController {
 	}
 
 	@GetMapping("/test-redis")
+	@Operation(summary = "Test Redis", description = "Cheks if redis server is running and has connection.")
 	public String testRedis() {
 		try {
 			redisTemplate.opsForValue().set("test", "Hello, Redis!");

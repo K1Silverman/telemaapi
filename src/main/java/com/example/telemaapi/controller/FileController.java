@@ -14,6 +14,7 @@ import com.example.telemaapi.infrastructure.validation.DisallowedExtensions;
 import com.example.telemaapi.service.FileService;
 import com.example.telemaapi.utils.JwtUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ public class FileController {
 	private FileService fileService;
 
 	@GetMapping("/")
+	@Operation(summary = "Get user files", description = "Retrieves user's uploaded files' information.")
 	public ResponseEntity<?> getUserFiles(
 			HttpServletRequest request)
 			throws Exception {
@@ -40,6 +42,7 @@ public class FileController {
 	}
 
 	@PostMapping(value = "/", consumes = "multipart/form-data")
+	@Operation(summary = "Upload file", description = "Uploads user's file.")
 	public ResponseEntity<?> uploadFile(
 			@Parameter(description = "File to upload", required = true) @RequestParam("File") @Valid @DisallowedExtensions({
 					"image/jpeg", "image/png", "image/gif" }) MultipartFile file,

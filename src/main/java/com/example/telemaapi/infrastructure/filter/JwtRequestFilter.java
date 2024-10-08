@@ -1,8 +1,7 @@
-package com.example.telemaapi.utils;
+package com.example.telemaapi.infrastructure.filter;
 
 import java.io.IOException;
 
-import org.hibernate.mapping.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.telemaapi.infrastructure.error.ApiError;
 import com.example.telemaapi.service.CustomUserDetailsService;
+import com.example.telemaapi.utils.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.jsonwebtoken.ExpiredJwtException;
